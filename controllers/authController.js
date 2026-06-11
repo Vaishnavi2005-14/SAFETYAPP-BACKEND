@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client();
 
 exports.signup = async (req, res) => {
   try {
@@ -62,3 +64,56 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.googleLogin = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ message: 'Google ID Token is required' });
+    }
+
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken,
+      });
+    } catch (err) {
+      return res.status(400).json({ message: 'Invalid Google ID Token' });
+    }
+
+    const payload = ticket.getPayload();
+    const { email, name } = payload;
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = new User({
+        email,
+        password: Math.random().toString(36).substring(2, 15),
+        profile: {
+          name: name || '',
+          age: '',
+          phone: '',
+          aadhaar: '',
+          customMessage: '🚨 Emergency! I need help immediately. My location:',
+          shakeEnabled: true,
+          shakeSensitivity: 'Medium'
+        }
+      });
+      await user.save();
+    }
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        profile: user.profile,
+        contacts: user.contacts
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
