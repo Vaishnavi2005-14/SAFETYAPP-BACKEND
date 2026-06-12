@@ -1,17 +1,19 @@
 # Shtree Kavach - Safety App Backend
 
-This is the backend service for Shtree Kavach. It provides a RESTful API built on Node.js and Express, using MongoDB for persistent storage of user credentials, profiles, and custom emergency contact networks.
+This is the backend service for Shtree Kavach. It provides a RESTful API built on Node.js and Express, connected to MongoDB Atlas for cloud storage of user credentials, profiles, and custom emergency contact networks, and is ready for deployment on Railway.
 
 ---
 
 ## 1. Tech Stack & Dependencies
 
 - **Node.js & Express**: Fast, lightweight framework for routing and JSON API endpoints.
-- **MongoDB & Mongoose**: Object Data Modeling (ODM) library for schema definition and query validation.
-- **jsonwebtoken (JWT)**: Generates and verifies cryptographic bearer tokens for secure requests.
-- **bcryptjs**: Blowfish-based password hashing algorithm to securely hash passwords before database storage.
-- **cors**: Middleware to allow cross-origin resource sharing, enabling communication from Android Emulators, iOS simulators, and real devices.
-- **dotenv**: Loads configuration variables from .env into environment processes.
+- **MongoDB Atlas**: Fully-managed cloud database service for persistent, scalable user and contact storage.
+- **Mongoose**: Object Data Modeling (ODM) library for database schema definition and validation.
+- **google-auth-library**: Google APIs client library for Node.js, used to verify Google OAuth ID Tokens securely.
+- **jsonwebtoken (JWT)**: Generates and verifies cryptographic bearer tokens for secure user sessions.
+- **bcryptjs**: Password hashing algorithm to securely store user credentials.
+- **cors**: Middleware to enable cross-origin resource sharing.
+- **dotenv**: Loads configuration variables from the environment.
 
 ---
 
@@ -32,7 +34,7 @@ backend/
 │   └── User.js               # User, Profile, and Contact schema definitions
 │
 └── controllers/
-    ├── authController.js     # Controller code for login and signup operations
+    ├── authController.js     # Controller code for login, signup, and google auth operations
     └── userController.js     # Controller code for fetching/saving profiles and contacts
 ```
 
@@ -92,6 +94,16 @@ The parent collection document:
   ```
 - **Response**: Returns JWT token and synced user document.
 
+#### 3. POST /api/auth/google
+- **Purpose**: Validates a Google OAuth ID Token and logs/registers the user.
+- **Request Body**:
+  ```json
+  {
+    "idToken": "GOOGLE_ID_TOKEN_HERE"
+  }
+  ```
+- **Response**: Returns JWT token and synced user document.
+
 ---
 
 ### User Settings (/api/user)
@@ -128,9 +140,28 @@ All endpoints below require a valid bearer token in the HTTP Header:
 
 ---
 
-## 5. How to Run the Server Local Setup
+## 5. Deployment & Configuration
 
-1. Clone or download this directory into a folder named `safetyapp-backend`.
+### Cloud Database (MongoDB Atlas)
+1. Sign up on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
+2. Create a free shared cluster.
+3. Add a database user with read/write access.
+4. Set Network Access to allow access from any IP address (`0.0.0.0/0`) since Railway uses dynamic IP hosting.
+5. Copy the connection string. It will look like:
+   `mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/safeher?retryWrites=true&w=majority`
+
+### Cloud Hosting (Railway)
+1. Sign up on [Railway](https://railway.app/).
+2. Click **New Project** -> **Deploy from GitHub repo**.
+3. Select your `SAFETYAPP-BACKEND` repository.
+4. Under **Variables**, add the following environment variables:
+   - `PORT`: 5000 (or let Railway assign it dynamically)
+   - `MONGO_URI`: Your MongoDB Atlas connection string
+   - `JWT_SECRET`: A secure private key for JWT signing
+5. Click **Deploy**. Railway will build the Node app and generate a public subdomain (e.g. `https://xxx.up.railway.app`) which you will use as `baseUrl` in your Flutter frontend.
+
+### Local Setup
+1. Clone the repository.
 2. Install dependencies:
    ```bash
    npm install
@@ -138,11 +169,10 @@ All endpoints below require a valid bearer token in the HTTP Header:
 3. Create a `.env` file in the root with:
    ```env
    PORT=5000
-   MONGO_URI=mongodb://127.0.0.1:27017/safeher
+   MONGO_URI=mongodb+srv://<username>:<password>@cluster0.xxxxx.mongodb.net/safeher?retryWrites=true&w=majority
    JWT_SECRET=SafeHerSuperSecretJWTKey123
    ```
 4. Start the server:
    ```bash
    npm start
    ```
-5. Ensure your MongoDB local daemon is running.
