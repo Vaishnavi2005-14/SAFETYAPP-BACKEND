@@ -94,16 +94,6 @@ The parent collection document:
   ```
 - **Response**: Returns JWT token and synced user document.
 
-#### 3. POST /api/auth/google
-- **Purpose**: Validates a Google OAuth ID Token and logs/registers the user.
-- **Request Body**:
-  ```json
-  {
-    "idToken": "GOOGLE_ID_TOKEN_HERE"
-  }
-  ```
-- **Response**: Returns JWT token and synced user document.
-
 ---
 
 ### User Settings (/api/user)

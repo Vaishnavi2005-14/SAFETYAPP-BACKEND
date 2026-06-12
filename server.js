@@ -19,7 +19,6 @@ mongoose.connect(mongoUri)
 
 app.post('/api/auth/signup', authController.signup);
 app.post('/api/auth/login', authController.login);
-app.post('/api/auth/google', authController.googleLogin);
 
 app.get('/api/user/data', authMiddleware, userController.getData);
 app.put('/api/user/profile', authMiddleware, userController.updateProfile);
